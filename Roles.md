@@ -219,3 +219,221 @@ dependencies:
   - { role: postgres, dbname: serverlist, admin_user: felix }
 ~~~
 
+#### Dependencies behavior
+
+* Default: Role added as dependency to playbook once
+  
+* If role is listed as dependency again, it does not run
+  
+* To override default, set allow_duplicates to yes in meta/main.yml
+
+### Order of Execution
+
+* Default: Role tasks execute before tasks of playbooks in which they appear
+
+* To override default, use pre_tasks and post_tasks
+
+  * pre_tasks: Tasks performed before any roles applied
+
+  * post_tasks: Tasks performed after all roles completed
+
+* Order of Execution Example
+
+~~~yaml
+---
+- hosts: remote.example.com
+  pre_tasks:
+    - shell: echo 'hello'
+  roles:
+    - role1
+    - role2
+  tasks:
+    - shell: echo 'still busy'
+  post_tasks:
+    - shell: echo 'goodbye'
+~~~
+
+### Role Creation
+
+* Simple to create roles in Linux
+
+  * No special development tools required
+
+* Three-step process:
+
+  * Create role directory structure
+
+  * Define role content
+
+  * Use role in playbook
+
+### Directory Structure
+
+* Ansible looks for roles in:
+
+  * roles subdirectory
+
+  * Directories referenced by roles_path
+
+    * Located in Ansible configuration file
+
+    * Contains list of directories to search
+
+* Each role has directory with specially named subdirectories
+
+* Directory Structure Example
+  * Define motd role:
+
+~~~bash
+tree roles/
+roles/
+└── motd
+    ├── defaults
+    │   └── main.yml
+    ├── files
+    ├── handlers
+    ├── tasks
+    │   └── main.yml
+    └── templates
+        └── motd.j2
+~~~
+
+### Subdirectories
+
+* files and templates
+
+  * Contain fixed-content files and templates
+
+  * Can be deployed by role when it is used
+
+* Other subdirectories
+
+  * Contain main.yml files
+
+  * Define default variable values, handlers, tasks, role metadata, variables
+
+* Empty subdirectory is ignored
+
+* Subdirectory not used by role can be omitted
+
+### Content
+
+* After creating structure, define role content
+
+* Use ROLENAME/tasks/main.yml
+
+  * Defines modules to call on managed hosts where role is applied
+
+#### Content Example
+
+* tasks/main.yml file manages /etc/motd on managed hosts
+
+  * Uses template to copy motd.j2 to managed host
+
+  * Retrieves motd.j2 from role’s templates subdirectory:
+
+~~~bash
+cat roles/motd/tasks/main.yml
+~~~
+~~~yaml
+---
+# tasks file for motd
+
+- name: deliver motd file
+  template:
+    src: templates/motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: 0444
+~~~
+
+### Content Output
+
+* Display contents of templates/motd.j2 template of motd role
+
+  * References Ansible facts and system_owner variable:
+
+~~~bash
+`cat roles/motd/templates/motd.j2`
+This is the system {{ ansible_hostname }}.
+
+Today's date is: {{ ansible_date_time.date }}.
+
+Only use this system with permission.
+You can ask {{ system_owner }} for access.
+~~~
+
+### Use in Playbook
+
+* To access role, reference it in roles: playbook section
+
+* Example: Playbook referencing motd role
+
+  * No variables specified
+
+  * Role applied with default variable values:
+
+~~~bash
+cat use-motd-role.yml
+~~~
+~~~yaml
+---
+- name: use motd role playbook
+  hosts: remote.example.com
+  user: devops
+  become: true
+
+  roles:
+    - motd
+~~~
+
+#### Playbook Output
+
+* In playbook output, tasks executed due to role identified by role name preceding task
+
+* Example: deliver motd file task prefaced by motd role name
+
+* Indicates task triggered by role:
+
+~~~bash
+ansible-playbook -i inventory use-motd-role.yml
+
+PLAY [use motd role playbook] **************************************************
+
+TASK [setup] *******************************************************************
+ok: [remote.example.com]
+
+TASK [motd : deliver motd file] ************************************************
+changed: [remote.example.com]
+
+PLAY RECAP *********************************************************************
+remote.example.com : ok=2 changed=1 unreachable=0 failed=0
+~~~
+
+#### Variables
+
+* Use variables with roles to override default values
+
+* When referencing roles with variables, must specify variable/value pairs
+
+##### Variable Example
+
+* Use motd with different value for system_owner
+
+* someone@host.example.com replaces variable reference when role is applied to managed host:
+
+~~~bash
+cat use-motd-role.yml
+~~~
+~~~yaml
+---
+- name: use motd role playbook
+  hosts: remote.example.com
+  user: devops
+  become: true
+
+  roles:
+    - { role: motd, system_owner: someone@host.example.com }
+~~~
+
