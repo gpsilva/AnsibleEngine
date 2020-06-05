@@ -21,38 +21,55 @@
 # Roles overview
 
 * Datacenters include variety of host types:
+
   * Web servers
+
   * Database servers
+
   * Hosts containing software development tools
 
 * Playbooks require tasks and handlers to manage these
+
   * Result: Large, complex playbooks
 
 * Roles can split playbooks into smaller playbooks and files
 
 ## Role Uses
+
 * Enable Ansible to load components from external files:
+
   * Tasks
+
   * Handlers
+
   * Variables
 
 * Associate and reference:
+
   * Static files
+
   * Templates
 
 * Files defining roles:
+
   * Given specific names
+
   * Organized in directory structure
 
 * Roles written as general purpose can be reused
 
 ## Benefits
+
 * Roles promote easy sharing of content
 
 * Roles can define essential elements of system type:
+
   * Web server
+
   * Database server
+
   * Git repository
+
   * Other purposes
 
 * Roles make larger projects more manageable
@@ -60,15 +77,21 @@
 * Administrators can work on different project roles in parallel
 
 ## Structure
+
 * Role functionality defined by directory structure
+
   * Top-level directory: Defines role name
+
   * Some subdirectories: Contain main.yml file
+
   * files and templates subdirectories: Contain objects referenced by main.yml files
 
 ### Structure Example
+
 * tree command displays user.example directory structure:
 
 `tree user.example`
+
 ~~~bash
 user.example/
 ├── defaults
@@ -108,14 +131,21 @@ user.example/
 * The main.yml file in the vars directory defines the role’s variable values.
 
 ## Variables and Defaults
+
 * To define role variables, create vars/main.yml with name/value pairs in hierarchy
+
   * YAML uses role variables like any other variable: {{ VAR_NAME }}
+
   * High priority
+
   * Cannot be overridden by inventory variables
 
 * Use default variables to set default values for included or dependent role variables
+
   * To define default variables, create defaults/main.yml with name/value pairs in hierarchy
+
   * Lowest priority of any variables
+
   * Overridden by any other variable
    
 * Best practice: Define variable in vars/main.yml or defaults/main.yml
@@ -123,8 +153,11 @@ user.example/
 * Use default variable when role needs value to be overridden
 
 ## Roles in playbooks
+
 * Simple to use roles in playbooks
+
 * Example:
+
 ~~~yaml
 ---
 - hosts: remote.example.com
@@ -134,25 +167,35 @@ user.example/
 ~~~
 
 ### Included Components
+
 * For each role, include the following in playbook in this order:
+
   * Tasks
+
   * Handlers
+
   * Variables
+
   * Dependencies
 
 * Role tasks (copy, script, template, include) reference files, templates, tasks
 
 * Ansible searches for items in these locations:
+  
   * Files: files
+  
   * Templates: templates
+  
   * Tasks: tasks
 
 * Eliminates need for absolute or relative path names
 
 ### Alternative syntax
+
 * role1 same as previous example
 
 * If role2 used, default variable values overridden:
+  
 ~~~yaml
 ---
 - hosts: remote.example.com
@@ -162,9 +205,13 @@ user.example/
 ~~~
 
 ### Dependencies
+
 * To include roles in playbook based on inclusion of other roles, use dependencies
+  
 * Example: Role defining documentation server depends on role that installs and configures web server
+  
 * Define roles in meta/main.yml in directory hierarchy:
+  
 ~~~yaml
 ---
 dependencies:
